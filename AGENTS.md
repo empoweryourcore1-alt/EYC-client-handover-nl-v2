@@ -2,7 +2,7 @@
 
 > **Project:** Empower Your Core (empoweryourcore.nl)
 > **Architecture:** Next.js 15 + Framer Hybrid | TypeScript | Vercel Edge
-> **Last updated:** 2026-03-28
+> **Last updated:** 2026-04-08
 
 ---
 
@@ -128,7 +128,37 @@ For the English homepage, the structure is now **HTML-first** and the runtime la
 
 ---
 
-## 6. Bilingual System (NL/EN)
+## 6. Homepage Editorial Heading Guardrail
+
+The three homepage section headings below must always keep the same premium editorial treatment:
+
+- `Ons aanbod` / `What we offer`
+- `Hoe wij werken` / `How we work`
+- `Ervaringen van onze cliënten` / `Hear from our clients`
+
+Required visual treatment:
+
+- `font-style: normal`
+- `Inter Display`
+- tight editorial tracking
+- original gold gradient / text fill preserved
+
+Intentional contrast:
+
+- the introductory sentence above each section may remain italic
+- the section heading itself must stay upright and non-cursive
+
+Do not revert these headings to Framer's italic default. When that happens, the block stops reading like a premium heading and starts reading like body copy.
+
+Implementation note:
+
+- Framer renders these areas as combined rich-text blocks
+- the heading is often the **last paragraph** in the intro block
+- if styling regresses, fix the last paragraph specifically in `public/translate.js` rather than styling the whole block as italic
+
+---
+
+## 7. Bilingual System (NL/EN)
 
 - **Storage:** `localStorage` key `eyc-lang` (`"nl"` or `"en"`)
 - **Toggle:** 40x40px button inside the navigation bar, grouped with hamburger menu
@@ -169,7 +199,7 @@ This is automatic — no manual switching needed. When the language changes, all
 
 ---
 
-## 7. Contact Form Architecture
+## 8. Contact Form Architecture
 
 ```
 User submits form (Framer HTML)
@@ -195,7 +225,7 @@ User submits form (Framer HTML)
 
 ---
 
-## 8. Development Commands
+## 9. Development Commands
 
 ```bash
 yarn install          # Install all dependencies
@@ -207,7 +237,7 @@ npx vercel --prod     # Deploy to Vercel production
 
 ---
 
-## 9. Cache Management
+## 10. Cache Management
 
 `translate.js` is the most frequently updated file. To bypass browser caching after changes:
 
@@ -220,7 +250,7 @@ npx vercel --prod     # Deploy to Vercel production
 
 ---
 
-## 10. Deployment Pipeline
+## 11. Deployment Pipeline
 
 **Recommended stack:** GitHub (version control) + Vercel (hosting) — both free tier.
 
@@ -243,7 +273,7 @@ git push origin main  →  Vercel webhook  →  Auto build + deploy  →  Live (
 
 ---
 
-## 11. Video Assets
+## 12. Video Assets
 
 | File | Location | Purpose |
 |------|----------|---------|
@@ -254,7 +284,7 @@ git push origin main  →  Vercel webhook  →  Auto build + deploy  →  Live (
 
 ---
 
-## 12. Maintenance Guide
+## 13. Maintenance Guide
 
 ### Adding a New Case Study Page
 
@@ -282,9 +312,20 @@ git push origin main  →  Vercel webhook  →  Auto build + deploy  →  Live (
 
 The runtime engine injects CSS via JavaScript functions (Section 4 above). Each function targets specific page sections. Modify the relevant function and bump the version string.
 
+### Preserving Premium Home Headings
+
+For `Ons aanbod`, `Hoe wij werken`, and `Ervaringen van onze cliënten`:
+
+- keep the heading itself non-cursive
+- keep `Inter Display`
+- keep the gold gradient / premium text fill
+- only the lead sentence above the heading may stay italic
+
+Because Framer often outputs these as multi-paragraph rich-text blocks, do not style the entire block as italic. Override the heading paragraph specifically.
+
 ---
 
-## 13. Known Considerations
+## 14. Known Considerations
 
 1. **Framer Class Selectors**: Framer generates hashed class names (e.g., `.framer-1pxw2q4`). These may change if pages are re-exported from Framer — verify CSS selectors after re-exports.
 2. **Video Autoplay**: Mobile browsers restrict autoplay. Videos are muted by default and use the `playsinline` attribute.

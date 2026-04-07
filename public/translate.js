@@ -2285,6 +2285,24 @@
           will-change: auto !important;
         }
 
+        .eyc-offer-intro-fix p:last-child,
+        .eyc-offer-intro-fix p:last-child .framer-text,
+        .eyc-offer-intro-fix p:last-child span.framer-text,
+        .eyc-offer-intro-fix p:last-child strong.framer-text,
+        .eyc-home-story-intro p:last-child,
+        .eyc-home-story-intro p:last-child .framer-text,
+        .eyc-home-story-intro p:last-child span.framer-text,
+        .eyc-home-story-intro p:last-child strong.framer-text,
+        .eyc-testimonial-intro-fix p:last-child,
+        .eyc-testimonial-intro-fix p:last-child .framer-text,
+        .eyc-testimonial-intro-fix p:last-child span.framer-text,
+        .eyc-testimonial-intro-fix p:last-child strong.framer-text {
+          --framer-font-style: normal !important;
+          font-family: "Inter Display", "Inter Display Placeholder", sans-serif !important;
+          font-style: normal !important;
+          letter-spacing: -0.04em !important;
+        }
+
         .eyc-testimonial-intro-fix,
         .eyc-testimonial-intro-fix p,
         .eyc-testimonial-intro-fix .framer-text {
@@ -2394,6 +2412,24 @@
           opacity: 1 !important;
           transform: none !important;
           will-change: auto !important;
+        }
+
+        .eyc-offer-intro-fix p:last-child,
+        .eyc-offer-intro-fix p:last-child .framer-text,
+        .eyc-offer-intro-fix p:last-child span.framer-text,
+        .eyc-offer-intro-fix p:last-child strong.framer-text,
+        .eyc-home-story-intro p:last-child,
+        .eyc-home-story-intro p:last-child .framer-text,
+        .eyc-home-story-intro p:last-child span.framer-text,
+        .eyc-home-story-intro p:last-child strong.framer-text,
+        .eyc-testimonial-intro-fix p:last-child,
+        .eyc-testimonial-intro-fix p:last-child .framer-text,
+        .eyc-testimonial-intro-fix p:last-child span.framer-text,
+        .eyc-testimonial-intro-fix p:last-child strong.framer-text {
+          --framer-font-style: normal !important;
+          font-family: "Inter Display", "Inter Display Placeholder", sans-serif !important;
+          font-style: normal !important;
+          letter-spacing: -0.04em !important;
         }
 
         .eyc-testimonial-intro-fix,
@@ -3162,11 +3198,21 @@
     });
   }
 
-  const HOME_TEACHER_TRAINING_CARD_VERSION = "2026-03-14-v1";
-  const HOME_TEACHER_TRAINING_CARD_TEASER = "Word een expert in beweging.";
-  const HOME_TEACHER_TRAINING_CARD_TEASER_HTML = `
-    <p class="framer-text framer-styles-preset-saf75d" data-styles-preset="xEbsc9wJk" style="--framer-text-color:var(--extracted-r6o4lv, var(--token-9b0083b8-b14b-4f4a-b9c6-4a160184ab2b, rgba(255, 255, 255, 0.6)))">${HOME_TEACHER_TRAINING_CARD_TEASER}</p>
-  `;
+  const HOME_TEACHER_TRAINING_CARD_VERSION = "2026-04-08-v1";
+  const HOME_TEACHER_TRAINING_CARD_TEASER_NL = "Word een expert in beweging.";
+  const HOME_TEACHER_TRAINING_CARD_TEASER_EN = "Become an expert in movement.";
+
+  function getHomeTeacherTrainingCardTeaser() {
+    return eycLang === "en"
+      ? HOME_TEACHER_TRAINING_CARD_TEASER_EN
+      : HOME_TEACHER_TRAINING_CARD_TEASER_NL;
+  }
+
+  function getHomeTeacherTrainingCardTeaserHtml() {
+    return `
+      <p class="framer-text framer-styles-preset-saf75d" data-styles-preset="xEbsc9wJk" style="--framer-text-color:var(--extracted-r6o4lv, var(--token-9b0083b8-b14b-4f4a-b9c6-4a160184ab2b, rgba(255, 255, 255, 0.6)))">${getHomeTeacherTrainingCardTeaser()}</p>
+    `;
+  }
 
   function syncHomeTeacherTrainingCard(root) {
     /* lang-aware: fix functions run for both NL and EN */
@@ -3210,12 +3256,12 @@
 
       if (
         teaserBlock.dataset.eycHomeTeacherTrainingCardVersion === HOME_TEACHER_TRAINING_CARD_VERSION
-        && norm(teaserBlock.textContent || "") === HOME_TEACHER_TRAINING_CARD_TEASER
+        && norm(teaserBlock.textContent || "") === getHomeTeacherTrainingCardTeaser()
       ) {
         return;
       }
 
-      teaserBlock.innerHTML = HOME_TEACHER_TRAINING_CARD_TEASER_HTML;
+      teaserBlock.innerHTML = getHomeTeacherTrainingCardTeaserHtml();
       teaserBlock.dataset.eycHomeTeacherTrainingCardVersion = HOME_TEACHER_TRAINING_CARD_VERSION;
     });
   }

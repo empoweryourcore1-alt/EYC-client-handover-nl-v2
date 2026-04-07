@@ -17,6 +17,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - Updated cache management guidance for `translate.js` versioning
 - Aligned the security documentation with the headers and audit commands currently used in the project
 - Documented the new HTML-first maintenance workflow for the English homepage
+- Added an explicit homepage typography guardrail so `What we offer`, `How we work`, and `Hear from our clients` stay non-cursive while the intro lead lines can remain italic
 
 ---
 
