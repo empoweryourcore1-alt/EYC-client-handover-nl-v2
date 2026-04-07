@@ -782,6 +782,111 @@
     normalizeRegisteredBrandSpacing(document.body);
   }
 
+  var deferredMediaObserver = null;
+
+  function getDeferredMediaObserver() {
+    if (deferredMediaObserver || typeof IntersectionObserver !== "function") return deferredMediaObserver;
+    deferredMediaObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        activateDeferredMedia(entry.target);
+        if (deferredMediaObserver) deferredMediaObserver.unobserve(entry.target);
+      });
+    }, { rootMargin: "320px 0px" });
+    return deferredMediaObserver;
+  }
+
+  function activateDeferredMedia(node) {
+    if (!node || node.dataset.eycMediaActivated === "true") return;
+
+    if (node.tagName === "VIDEO") {
+      var videoUpdated = false;
+      var deferredSrc = node.dataset.eycDeferredSrc || "";
+      if (deferredSrc && node.getAttribute("src") !== deferredSrc) {
+        node.setAttribute("src", deferredSrc);
+        videoUpdated = true;
+      }
+
+      var deferredSources = node.querySelectorAll("source[data-eyc-deferred-src]");
+      deferredSources.forEach(function(source) {
+        var nextSrc = source.dataset.eycDeferredSrc || "";
+        if (nextSrc && source.getAttribute("src") !== nextSrc) {
+          source.setAttribute("src", nextSrc);
+          videoUpdated = true;
+        }
+      });
+
+      if (videoUpdated && typeof node.load === "function") {
+        node.load();
+      }
+
+      node.dataset.eycMediaActivated = "true";
+
+      if (node.dataset.eycAutoplay === "true" || node.autoplay) {
+        var playPromise = typeof node.play === "function" ? node.play() : null;
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(function() {});
+        }
+      }
+      return;
+    }
+
+    if (node.tagName === "IFRAME") {
+      var nextSrcdoc = node.dataset.eycSrcdoc || "";
+      var nextSrc = node.dataset.eycSrc || "";
+      if (nextSrcdoc && !node.srcdoc) node.srcdoc = nextSrcdoc;
+      if (nextSrc && node.getAttribute("src") !== nextSrc) node.setAttribute("src", nextSrc);
+      node.dataset.eycMediaActivated = "true";
+    }
+  }
+
+  function observeDeferredMedia(node) {
+    if (!node) return;
+    var observer = getDeferredMediaObserver();
+    if (!observer) {
+      activateDeferredMedia(node);
+      return;
+    }
+    observer.observe(node);
+  }
+
+  function prepareDeferredVideo(video, src, options) {
+    if (!video) return;
+
+    var desiredSrc = src || video.dataset.eycDeferredSrc || video.getAttribute("src") || "";
+    if (!desiredSrc) return;
+
+    if (options && options.autoplay !== false) {
+      video.dataset.eycAutoplay = "true";
+      video.setAttribute("autoplay", "");
+    }
+    if (!options || options.muted !== false) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute("muted", "");
+    }
+    if (!video.hasAttribute("playsinline")) video.setAttribute("playsinline", "");
+    video.setAttribute("preload", options && options.preload ? options.preload : "none");
+
+    if (video.dataset.eycMediaActivated === "true" && video.dataset.eycDeferredSrc === desiredSrc) return;
+
+    video.dataset.eycDeferredSrc = desiredSrc;
+    video.dataset.eycMediaActivated = "false";
+
+    if (video.getAttribute("src")) video.removeAttribute("src");
+
+    var sources = video.querySelectorAll("source");
+    if (sources.length) {
+      sources.forEach(function(source) {
+        var sourceSrc = source.dataset.eycDeferredSrc || source.getAttribute("src") || desiredSrc;
+        if (sourceSrc) source.dataset.eycDeferredSrc = sourceSrc;
+        if (source.getAttribute("src")) source.removeAttribute("src");
+      });
+    }
+
+    observeDeferredMedia(video);
+  }
+
   const introVideoSrc = "/assets/Intro_Video.mp4";
   const outroVideoSrc = "/assets/Outro_Video.mp4";
   function fixVideos(root) {
@@ -790,6 +895,10 @@
     videos.forEach((video, index) => {
       if (video.dataset && video.dataset.eycVideoLock === "true") return;
       const desiredSrc = index === 0 ? introVideoSrc : outroVideoSrc;
+      if (index > 0) {
+        prepareDeferredVideo(video, desiredSrc, { autoplay: true, muted: true, preload: "none" });
+        return;
+      }
       let updated = false;
       const current = video.getAttribute("src") || "";
       if (current !== desiredSrc) {
@@ -1031,7 +1140,7 @@
   const ABOUT_US_BODY_HTML = `
     <style>.eyc-about-video-wrap{width:100%;max-width:100%;margin:0 0 2em 0;border-radius:20px;overflow:hidden;}@media(min-width:768px){.eyc-about-video-wrap{width:70%;max-width:480px;margin:0 auto 2.5em auto;border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,0.25);}}</style>
     <div class="eyc-about-video-wrap">
-      <video data-eyc-video-lock="true" autoplay loop muted playsinline style="width:100%;height:auto;display:block;">
+      <video data-eyc-video-lock="true" autoplay loop muted playsinline preload="none" style="width:100%;height:auto;display:block;">
         <source src="/assets/videos/about-intro.mp4" type="video/mp4">
       </video>
     </div>
@@ -1125,6 +1234,11 @@
     if (content && content.dataset.eycAboutVersion !== ABOUT_US_PAGE_VERSION) {
       content.innerHTML = ABOUT_US_BODY_HTML;
       content.dataset.eycAboutVersion = ABOUT_US_PAGE_VERSION;
+    }
+
+    const aboutVideo = scope.querySelector(".eyc-about-video-wrap video");
+    if (aboutVideo) {
+      prepareDeferredVideo(aboutVideo, "/assets/videos/about-intro.mp4", { autoplay: true, muted: true, preload: "none" });
     }
   }
 
@@ -1263,7 +1377,7 @@
       muted
       loop
       playsinline
-      preload="auto"
+      preload="metadata"
     ></video>
   `;
   const TEACHER_TRAINING_HEADER_NL = "Opleiding voor Pilatesdocenten";
@@ -1343,6 +1457,7 @@
     // Unmute the video on first user interaction (browsers block autoplay with sound)
     var video = content.querySelector("video[data-eyc-unmute]");
     if (video && !video.dataset.eycUnmuteListenerAdded) {
+      prepareDeferredVideo(video, TEACHER_TRAINING_VIDEO_SRC, { autoplay: true, muted: true, preload: "metadata" });
       video.removeAttribute("poster");
       video.dataset.eycUnmuteListenerAdded = "true";
       function unmuteOnInteraction() {
@@ -2432,7 +2547,9 @@
     clipSrcs.forEach(function(src) {
       var frame = document.createElement("iframe");
       frame.style.cssText = "flex:1;min-width:0;border:none;border-radius:16px;aspect-ratio:16/9;overflow:hidden;background:#0e0e0f";
-      frame.srcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;overflow:hidden;background:#0e0e0f}video{width:100%;height:100%;object-fit:contain}</style></head><body><video autoplay muted loop playsinline src="' + src + '"></video></body></html>';
+      frame.setAttribute("loading", "lazy");
+      frame.dataset.eycSrcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;overflow:hidden;background:#0e0e0f}video{width:100%;height:100%;object-fit:contain}</style></head><body><video autoplay muted loop playsinline preload="none" src="' + src + '"></video></body></html>';
+      observeDeferredMedia(frame);
       row.appendChild(frame);
     });
     container.appendChild(row);
@@ -3396,11 +3513,8 @@
     if (existing) {
       const video = existing.querySelector("video");
       if (video) {
-        if (video.getAttribute("src") !== HOME_BENEFIT_VIDEO_SRC) video.setAttribute("src", HOME_BENEFIT_VIDEO_SRC);
         if (video.getAttribute("poster") !== HOME_BENEFIT_VIDEO_POSTER) video.setAttribute("poster", HOME_BENEFIT_VIDEO_POSTER);
-        video.dataset.eycVideoLock = "true";
-        video.muted = true;
-        video.defaultMuted = true;
+        prepareDeferredVideo(video, HOME_BENEFIT_VIDEO_SRC, { autoplay: true, muted: true, preload: "none" });
       }
       stack.setAttribute("data-eyc-benefit-video-version", version);
       return;
@@ -3418,7 +3532,7 @@
         muted
         loop
         playsinline
-        preload="metadata"
+        preload="none"
         data-eyc-video-lock="true"
         aria-label="Video-impressie van de Empower Your Core studio"
       ></video>
@@ -3439,12 +3553,7 @@
 
     const video = shell.querySelector("video");
     if (video) {
-      video.muted = true;
-      video.defaultMuted = true;
-      if (typeof video.play === "function") {
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
-      }
+      prepareDeferredVideo(video, HOME_BENEFIT_VIDEO_SRC, { autoplay: true, muted: true, preload: "none" });
     }
   }
 
