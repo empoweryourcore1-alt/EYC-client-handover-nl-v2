@@ -4457,8 +4457,8 @@
         existingLines.push(el.closest("p, span, div") || el);
       });
 
-      let kicker = existingLines[0] || document.querySelector('#scrollsection [data-eyc-home-top-kicker="true"]');
-      existingLines.slice(1).forEach((dup) => {
+      let kicker = document.querySelector('#scrollsection [data-eyc-home-top-kicker="true"]');
+      existingLines.forEach((dup) => {
         const dupBlock = dup.closest && dup.closest('[data-framer-component-type="RichTextContainer"]');
         if (dupBlock && dupBlock !== kicker) dupBlock.remove();
         else if (dup !== kicker) dup.remove();
@@ -4671,6 +4671,12 @@
       if (childMatch) return;
 
       const targetLine = el.closest("p, span, div") || el;
+      if (isTopKicker && !targetLine.hasAttribute("data-eyc-home-top-kicker")) {
+        const richBlock = targetLine.closest('[data-framer-component-type="RichTextContainer"]');
+        if (richBlock) richBlock.remove();
+        else targetLine.remove();
+        return;
+      }
       if (eycLang === "en") {
         if (isTopKicker && norm(targetLine.textContent || "") !== "Everything begins at the center — yours too?") {
           targetLine.textContent = "Everything begins at the center — yours too?";
