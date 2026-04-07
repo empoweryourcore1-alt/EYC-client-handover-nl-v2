@@ -900,6 +900,9 @@
         return;
       }
       let updated = false;
+      if (video.getAttribute("preload") !== "metadata") {
+        video.setAttribute("preload", "metadata");
+      }
       const current = video.getAttribute("src") || "";
       if (current !== desiredSrc) {
         video.setAttribute("src", desiredSrc);
@@ -4869,14 +4872,42 @@
     // Initial insert
     ensureToggleInNav();
 
-    // Re-insert if Framer recreates nav elements (variant change, menu open/close)
-    (function pollNavToggle() {
-      var topRow = document.querySelector('nav .framer-b6gkj0');
-      if (topRow && !topRow.querySelector('.eyc-lang-toggle')) {
+    var navSyncQueued = false;
+    function scheduleNavToggleSync() {
+      if (navSyncQueued) return;
+      navSyncQueued = true;
+      setTimeout(function() {
+        navSyncQueued = false;
         ensureToggleInNav();
+      }, 0);
+    }
+
+    function touchesNav(node) {
+      if (!node || node.nodeType !== 1) return false;
+      if (node.matches && (node.matches("nav") || node.matches(".framer-b6gkj0") || node.matches(".framer-1kpu9vk"))) return true;
+      return !!(node.querySelector && node.querySelector("nav, .framer-b6gkj0, .framer-1kpu9vk"));
+    }
+
+    var navObserver = new MutationObserver(function(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var mutation = mutations[i];
+        if (mutation.type !== "childList") continue;
+        if (touchesNav(mutation.target)) {
+          scheduleNavToggleSync();
+          return;
+        }
+        for (var j = 0; j < mutation.addedNodes.length; j++) {
+          if (touchesNav(mutation.addedNodes[j])) {
+            scheduleNavToggleSync();
+            return;
+          }
+        }
       }
-      requestAnimationFrame(pollNavToggle);
-    })();
+    });
+    navObserver.observe(document.body || document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
   }
 
   var observer = null;
